@@ -21,3 +21,12 @@ jobs:
         with:
           name: scm-sync-configuration.hpi
           path: target/scm-sync-configuration.hpi
+
+      - name: create release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: true
+          automatic_release_tag: "snapshot"
+          title: "SCM Sync Configuration Plugin snapshot build"
+          files: target/scm-sync-configuration.hpi
