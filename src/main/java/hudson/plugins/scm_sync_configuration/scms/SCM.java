@@ -55,7 +55,7 @@ public abstract class SCM {
 
     @SuppressWarnings("unchecked")
     public Descriptor<hudson.scm.SCM> getSCMDescriptor(){
-        return Jenkins.getInstance().getDescriptorByName(getSCMClassName());
+        return Jenkins.get().getDescriptorByName(getSCMClassName());
     }
 
     public String getRepositoryUrlHelpPath() {

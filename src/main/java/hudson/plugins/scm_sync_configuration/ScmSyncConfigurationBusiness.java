@@ -13,8 +13,6 @@ import hudson.util.DaemonThreadFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.scm.ScmException;
 import org.apache.maven.scm.manager.ScmManager;
-import org.codehaus.plexus.PlexusContainerException;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -60,7 +58,7 @@ public class ScmSyncConfigurationBusiness {
         return scmSyncConfigurationStatusManager;
     }
 
-    public void init(ScmContext scmContext) throws ComponentLookupException, PlexusContainerException {
+    public void init(ScmContext scmContext) {
         ScmManager scmManager = SCMManagerFactory.getInstance().createScmManager();
         this.scmManipulator = new SCMManipulator(scmManager);
         this.checkoutScmDirectory = new File(getCheckoutScmDirectoryAbsolutePath());
@@ -113,9 +111,9 @@ public class ScmSyncConfigurationBusiness {
             return null;
         }
 
-
+        File scmRoot = new File(getCheckoutScmDirectoryAbsolutePath());
         File rootHierarchyTranslatedInScm = hierarchyPath.getScmFile();
-        List<File> filesToCommit = scmManipulator.deleteHierarchy(rootHierarchyTranslatedInScm);
+        List<File> filesToCommit = scmManipulator.deleteHierarchy(scmRoot, rootHierarchyTranslatedInScm);
 
         // Once done, we should delete path in scm if it is a directory
         if(hierarchyPath.isDirectory()){
@@ -349,7 +347,7 @@ public class ScmSyncConfigurationBusiness {
         List<File> l = new ArrayList<File>();
         for(File f : from.listFiles()) {
             String newRelative = relative + File.separator + f.getName();
-            File jenkinsFile = new File(Jenkins.getInstance().getRootDir() + newRelative);
+            File jenkinsFile = new File(Jenkins.get().getRootDir() + newRelative);
             if (f.getName().equals(scmManipulator.getScmSpecificFilename())) {
                 // nothing to do
             } else if (f.isDirectory()) {
@@ -387,7 +385,7 @@ public class ScmSyncConfigurationBusiness {
     }
 
     public static String getCheckoutScmDirectoryAbsolutePath(){
-        return new File(new File(Jenkins.getInstance().getRootDir(), WORKING_DIRECTORY), CHECKOUT_SCM_DIRECTORY).getAbsolutePath();
+        return new File(new File(Jenkins.get().getRootDir(), WORKING_DIRECTORY), CHECKOUT_SCM_DIRECTORY).getAbsolutePath();
     }
 
     public static String getScmDirectoryName() {
@@ -395,12 +393,12 @@ public class ScmSyncConfigurationBusiness {
     }
 
     public void purgeFailLogs() {
-        Jenkins.getInstance().checkPermission(purgeFailLogPermission());
+        Jenkins.get().checkPermission(purgeFailLogPermission());
         scmSyncConfigurationStatusManager.purgeFailLogs();
     }
 
     public boolean canCurrentUserPurgeFailLogs() {
-        return Jenkins.getInstance().hasPermission(purgeFailLogPermission());
+        return Jenkins.get().hasPermission(purgeFailLogPermission());
     }
 
     private static Permission purgeFailLogPermission(){

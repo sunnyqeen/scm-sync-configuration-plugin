@@ -36,12 +36,10 @@ import org.apache.maven.scm.ScmException;
 import org.apache.maven.scm.ScmFileSet;
 import org.apache.maven.scm.provider.ScmProvider;
 import org.apache.maven.scm.provider.ScmProviderRepository;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 
 import java.io.File;
@@ -74,7 +72,7 @@ public class ScmSyncConfigurationPlugin extends Plugin{
     public static final transient List<ScmSyncStrategy> DEFAULT_STRATEGIES = ImmutableList.copyOf(
             Collections2.filter(Arrays.asList(AVAILABLE_STRATEGIES), new Predicate<ScmSyncStrategy>() {
                 @Override
-                public boolean apply(@Nullable ScmSyncStrategy scmSyncStrategy) {
+                public boolean apply(ScmSyncStrategy scmSyncStrategy) {
                     return !( scmSyncStrategy instanceof ManualIncludesScmSyncStrategy );
                 }
             }));
@@ -150,10 +148,6 @@ public class ScmSyncConfigurationPlugin extends Plugin{
             this.scmRepositoryUrl = null;
         }
 
-        // SCMManagerFactory.start() must be called here instead of ScmSyncConfigurationItemListener.onLoaded()
-        // because, for some unknown reasons, we reach plexus bootstraping exceptions when
-        // calling Embedder.start() when everything is loaded (very strange...)
-        SCMManagerFactory.getInstance().start();
         initialInit();
     }
 
@@ -185,7 +179,6 @@ public class ScmSyncConfigurationPlugin extends Plugin{
 
     @Override
     public void stop() throws Exception {
-        SCMManagerFactory.getInstance().stop();
         super.stop();
     }
 
@@ -325,13 +318,13 @@ public class ScmSyncConfigurationPlugin extends Plugin{
     private User getCurrentUser(){
         User user = null;
         try {
-            user = Jenkins.getInstance().getMe();
+            user = Jenkins.get().getMe();
         }catch(AccessDeniedException e){}
         return user;
     }
 
     public static ScmSyncConfigurationPlugin getInstance(){
-        return Jenkins.getInstance().getPlugin(ScmSyncConfigurationPlugin.class);
+        return Jenkins.get().getPlugin(ScmSyncConfigurationPlugin.class);
     }
 
     public ScmSyncStrategy getStrategyForSaveable(Saveable s, File f){
@@ -505,17 +498,14 @@ public class ScmSyncConfigurationPlugin extends Plugin{
             }
         }
         // Try to access the repository...
-        if (Jenkins.getInstance().hasPermission(Permission.CONFIGURE)) {
+        if (Jenkins.get().hasPermission(Permission.CONFIGURE)) {
             try {
                 ScmProvider scmProvider = SCMManagerFactory.getInstance().createScmManager().getProviderByUrl("scm:git:" + trimmed);
                 // Stupid interface. Why do I have to pass a delimiter if the URL must already be without "scm:git:" prefix??
                 ScmProviderRepository remoteRepo = scmProvider.makeProviderScmRepository(trimmed, ':');
                 // File set and parameters are ignored by the maven SCM gitexe implementation (for now...)
-                scmProvider.remoteInfo(remoteRepo, new ScmFileSet(Jenkins.getInstance().getRootDir()), new CommandParameters());
+                scmProvider.remoteInfo(remoteRepo, new ScmFileSet(Jenkins.get().getRootDir()), new CommandParameters());
                 // We actually don't care about the result. If this cannot access the repo, it'll raise an exception.
-            } catch (ComponentLookupException e) {
-                LOGGER.warning("Cannot validate repository URL: no ScmManager: " + e.getMessage());
-                // And otherwise ignore
             } catch (ScmException e) {
                 LOGGER.warning("Repository at " + trimmed + " is inaccessible");
                 return FormValidation.error(Messages.ScmSyncConfigurationsPlugin_gitRepoUrlInaccessible(trimmed));

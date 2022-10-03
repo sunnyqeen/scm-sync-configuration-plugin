@@ -449,10 +449,10 @@ public abstract class HudsonExtensionsTest extends ScmSyncConfigurationPluginBas
 
     @Test
     public void testPageMatchers() throws Exception {
-        assertStrategy(JobConfigScmSyncStrategy.class, Jenkins.getInstance().getRootUrl() + "job/jobName/configure");
-        assertStrategy(JobConfigScmSyncStrategy.class, Jenkins.getInstance().getRootUrl() + "job/folderName/job/jobName/configure");
-        assertStrategy(null, Jenkins.getInstance().getRootUrl() + "job/folderName/job/configure");
-        assertStrategy(null, Jenkins.getInstance().getRootUrl() + "job/folderName/job/someThing/configure/foo");
+        assertStrategy(JobConfigScmSyncStrategy.class, Jenkins.get().getRootUrl() + "job/jobName/configure");
+        assertStrategy(JobConfigScmSyncStrategy.class, Jenkins.get().getRootUrl() + "job/folderName/job/jobName/configure");
+        assertStrategy(null, Jenkins.get().getRootUrl() + "job/folderName/job/configure");
+        assertStrategy(null, Jenkins.get().getRootUrl() + "job/folderName/job/someThing/configure/foo");
     }
 
     private void assertStrategy(Class<? extends ScmSyncStrategy> expectedStrategyClass, String url) {

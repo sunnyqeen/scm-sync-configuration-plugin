@@ -110,12 +110,10 @@ public class SCMManipulator {
         return checkoutOk;
     }
 
-    public List<File> deleteHierarchy(File hierarchyToDelete){
+    public List<File> deleteHierarchy(File scmRoot, File hierarchyToDelete){
         if(!expectScmRepositoryInitiated()){
             return null;
         }
-
-        File enclosingDirectory = hierarchyToDelete.getParentFile();
 
         LOGGER.fine("Deleting SCM hierarchy ["+hierarchyToDelete.getAbsolutePath()+"] from SCM ...");
 
@@ -125,13 +123,13 @@ public class SCMManipulator {
         }
 
         try {
-            ScmFileSet deleteFileSet = new ScmFileSet(enclosingDirectory, hierarchyToDelete);
+            ScmFileSet deleteFileSet = new ScmFileSet(scmRoot, hierarchyToDelete);
             StatusScmResult checkForChanges = this.scmManager.status(scmRepository, deleteFileSet);
             LOGGER.fine("Checking for changes on SCM hierarchy ["+hierarchyToDelete.getAbsolutePath()+"] from SCM ...");
             for (ScmFile changedFile : checkForChanges.getChangedFiles()) {
                 //check in this change as it affect our hierarchy
                 LOGGER.fine("[checkForChanges] Found changed file "+changedFile.toString()+", try to check-in...");
-                CheckInScmResult checkedInChangedFile = scmManager.checkIn(scmRepository, new ScmFileSet(enclosingDirectory.getParentFile(), new File(changedFile.getPath())), "Check-In changes for "+changedFile.getPath());
+                CheckInScmResult checkedInChangedFile = scmManager.checkIn(scmRepository, new ScmFileSet(scmRoot, new File(changedFile.getPath())), "Check-In changes for "+changedFile.getPath());
                 if(!checkedInChangedFile.isSuccess()){
                   LOGGER.severe("[checkForChanges] Failed to check-in changed file ["+changedFile.getPath()+"]: "+checkedInChangedFile.getProviderMessage());
               }

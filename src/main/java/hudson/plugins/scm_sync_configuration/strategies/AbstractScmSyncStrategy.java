@@ -12,8 +12,6 @@ import hudson.plugins.scm_sync_configuration.model.WeightedMessage;
 import hudson.plugins.scm_sync_configuration.strategies.model.ConfigurationEntityMatcher;
 import hudson.plugins.scm_sync_configuration.strategies.model.PageMatcher;
 
-import javax.annotation.Nullable;
-
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.types.selectors.FileSelector;
 
@@ -28,8 +26,8 @@ public abstract class AbstractScmSyncStrategy implements ScmSyncStrategy {
 
     private static final Function<String,File> PATH_TO_FILE_IN_HUDSON = new Function<String, File>() {
         @Override
-        public File apply(@Nullable String path) {
-            return new File(Jenkins.getInstance().getRootDir(), path);
+        public File apply(String path) {
+            return new File(Jenkins.get().getRootDir(), path);
         }
     };
 
@@ -67,7 +65,7 @@ public abstract class AbstractScmSyncStrategy implements ScmSyncStrategy {
     }
 
     public PageMatcher getPageMatcherMatching(String url){
-        String rootUrl = Jenkins.getInstance().getRootUrlFromRequest();
+        String rootUrl = Jenkins.get().getRootUrlFromRequest();
         String cleanedUrl = null;
         if(url.startsWith(rootUrl)){
             cleanedUrl = url.substring(rootUrl.length());
@@ -89,7 +87,7 @@ public abstract class AbstractScmSyncStrategy implements ScmSyncStrategy {
 
     @Override
     public List<File> collect(File directory) {
-        File jenkinsRoot = Jenkins.getInstance().getRootDir();
+        File jenkinsRoot = Jenkins.get().getRootDir();
         if (jenkinsRoot.equals(directory)) {
             directory = null;
         }

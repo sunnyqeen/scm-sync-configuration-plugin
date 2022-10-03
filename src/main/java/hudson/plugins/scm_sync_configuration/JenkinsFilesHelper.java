@@ -7,7 +7,7 @@ import jenkins.model.Jenkins;
 public class JenkinsFilesHelper {
 
     public static String buildPathRelativeToHudsonRoot(File file) {
-        File jenkinsRoot = Jenkins.getInstance().getRootDir();
+        File jenkinsRoot = Jenkins.get().getRootDir();
         String jenkinsRootPath = jenkinsRoot.getAbsolutePath();
         String fileAbsolutePath = file.getAbsolutePath();
         if (fileAbsolutePath.equals(jenkinsRootPath)) {
@@ -26,6 +26,6 @@ public class JenkinsFilesHelper {
     }
 
     public static File buildFileFromPathRelativeToHudsonRoot(String pathRelativeToJenkinsRoot){
-        return new File(Jenkins.getInstance().getRootDir(), pathRelativeToJenkinsRoot);
+        return new File(Jenkins.get().getRootDir(), pathRelativeToJenkinsRoot);
     }
 }

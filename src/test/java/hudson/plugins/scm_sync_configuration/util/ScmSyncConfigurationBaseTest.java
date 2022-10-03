@@ -17,16 +17,14 @@ import hudson.plugins.scm_sync_configuration.xstream.migration.ScmSyncConfigurat
 import hudson.plugins.test.utils.DirectoryUtils;
 import hudson.plugins.test.utils.scms.ScmUnderTest;
 
-import org.codehaus.plexus.PlexusContainerException;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.objenesis.ObjenesisStd;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -49,7 +47,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({ "org.tmatesoft.svn.*" })
-@PrepareForTest({Hudson.class, Jenkins.class, SCM.class, ScmSyncSubversionSCM.class, PluginWrapper.class})
+@PrepareForTest({Jenkins.class, SCM.class, ScmSyncSubversionSCM.class, PluginWrapper.class})
 public abstract class ScmSyncConfigurationBaseTest {
 
     @Rule protected TestName testName = new TestName();
@@ -69,7 +67,15 @@ public abstract class ScmSyncConfigurationBaseTest {
         this.scmContext = null;
     }
 
-    @SuppressWarnings("deprecation") // We need to mock Hudson.getInstance()
+    @Mock
+    private PluginWrapper pluginWrapper;
+
+    @Mock
+    private Jenkins hudsonMockedInstance;
+
+    @Mock
+    private User mockedUser;
+
     @Before
     public void setup() throws Throwable {
         // Instantiating ScmSyncConfigurationPlugin instance for unit tests by using
@@ -83,7 +89,6 @@ public abstract class ScmSyncConfigurationBaseTest {
         };
 
         // Mocking PluginWrapper attached to current ScmSyncConfigurationPlugin instance
-        PluginWrapper pluginWrapper = PowerMockito.mock(PluginWrapper.class);
         when(pluginWrapper.getShortName()).thenReturn("scm-sync-configuration");
         // Setting field on current plugin instance
         Field wrapperField = Plugin.class.getDeclaredField("wrapper");
@@ -111,13 +116,9 @@ public abstract class ScmSyncConfigurationBaseTest {
         scmUnderTest.initRepo(curentLocalRepository);
 
         // Mocking user
-        User mockedUser = Mockito.mock(User.class);
         when(mockedUser.getId()).thenReturn("fcamblor");
 
         // Mocking Hudson singleton instance ...
-        // Warning : this line will only work on Objenesis supported VMs :
-        // http://code.google.com/p/objenesis/wiki/ListOfCurrentlySupportedVMs
-        Hudson hudsonMockedInstance = spy((Hudson) new ObjenesisStd().getInstantiatorOf(Hudson.class).newInstance());
         PowerMockito.doReturn(currentHudsonRootDirectory).when(hudsonMockedInstance).getRootDir();
         PowerMockito.doReturn(mockedUser).when(hudsonMockedInstance).getMe();
         PowerMockito.doReturn(scmSyncConfigPluginInstance).when(hudsonMockedInstance).getPlugin(ScmSyncConfigurationPlugin.class);
@@ -125,10 +126,8 @@ public abstract class ScmSyncConfigurationBaseTest {
         PowerMockito.doReturn(TEST_URL).when(hudsonMockedInstance).getRootUrlFromRequest();
 
         PowerMockito.mockStatic(Jenkins.class);
-        PowerMockito.doReturn(hudsonMockedInstance).when(Jenkins.class); Jenkins.getInstance();
-        PowerMockito.mockStatic(Hudson.class);
-        PowerMockito.doReturn(hudsonMockedInstance).when(Hudson.class); Hudson.getInstance();
-        //when(Hudson.getInstance()).thenReturn(hudsonMockedInstance);
+        //PowerMockito.doReturn(hudsonMockedInstance).when(Jenkins.class); Jenkins.get();
+        when(Jenkins.get()).thenReturn(hudsonMockedInstance);
     }
 
     @After
@@ -171,7 +170,7 @@ public abstract class ScmSyncConfigurationBaseTest {
         return mockedSCM;
     }
 
-    protected SCMManipulator createMockedScmManipulator() throws ComponentLookupException, PlexusContainerException{
+    protected SCMManipulator createMockedScmManipulator() {
         // Settling up scm context
         SCMManipulator scmManipulator = new SCMManipulator(SCMManagerFactory.getInstance().createScmManager());
         boolean configSettledUp = scmManipulator.scmConfigurationSettledUp(scmContext, true);
@@ -180,15 +179,15 @@ public abstract class ScmSyncConfigurationBaseTest {
         return scmManipulator;
     }
 
-    protected void verifyCurrentScmContentMatchesCurrentHudsonDir(boolean match) throws ComponentLookupException, PlexusContainerException, IOException{
+    protected void verifyCurrentScmContentMatchesCurrentHudsonDir(boolean match) throws IOException{
         verifyCurrentScmContentMatchesHierarchy(getCurrentHudsonRootDirectory(), match);
     }
 
-    protected void verifyCurrentScmContentMatchesHierarchy(String hierarchyPath, boolean match) throws ComponentLookupException, PlexusContainerException, IOException{
+    protected void verifyCurrentScmContentMatchesHierarchy(String hierarchyPath, boolean match) throws IOException{
         verifyCurrentScmContentMatchesHierarchy(new ClassPathResource(hierarchyPath).getFile(), match);
     }
 
-    protected void verifyCurrentScmContentMatchesHierarchy(File hierarchy, boolean match) throws ComponentLookupException, PlexusContainerException, IOException{
+    protected void verifyCurrentScmContentMatchesHierarchy(File hierarchy, boolean match) throws IOException{
         SCMManipulator scmManipulator = createMockedScmManipulator();
 
         // Checkouting scm in temp directory
@@ -206,7 +205,7 @@ public abstract class ScmSyncConfigurationBaseTest {
         }
     }
 
-    protected void verifyCurrentScmContentMatchesHierarchy(String hierarchyPath) throws ComponentLookupException, PlexusContainerException, IOException{
+    protected void verifyCurrentScmContentMatchesHierarchy(String hierarchyPath) throws IOException{
         verifyCurrentScmContentMatchesHierarchy(hierarchyPath, true);
     }
 

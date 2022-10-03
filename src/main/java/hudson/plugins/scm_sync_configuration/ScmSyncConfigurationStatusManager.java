@@ -21,8 +21,8 @@ public class ScmSyncConfigurationStatusManager {
     private final File success;
 
     public ScmSyncConfigurationStatusManager() {
-        fail = new File(Jenkins.getInstance().getRootDir().getAbsolutePath(), LOG_FAIL_FILENAME);
-        success = new File(Jenkins.getInstance().getRootDir().getAbsolutePath(), LOG_SUCCESS_FILENAME);
+        fail = new File(Jenkins.get().getRootDir().getAbsolutePath(), LOG_FAIL_FILENAME);
+        success = new File(Jenkins.get().getRootDir().getAbsolutePath(), LOG_SUCCESS_FILENAME);
     }
 
     public String getLastFail() {

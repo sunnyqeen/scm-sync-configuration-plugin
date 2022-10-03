@@ -5,12 +5,15 @@ import hudson.plugins.scm_sync_configuration.scms.ScmSyncSubversionSCM;
 
 import java.io.File;
 
-import org.tmatesoft.svn.core.io.SVNRepositoryFactory;
-
 public class ScmUnderTestSubversion implements ScmUnderTest {
 
 	public void initRepo(File path) throws Exception {
-		SVNRepositoryFactory.createLocalRepository(path, true , false);
+		ProcessBuilder pb = new ProcessBuilder("svnadmin", "create", ".");
+		pb.directory(path);
+		Process p = pb.start();
+		if (p.waitFor() != 0) {
+			throw new Exception("Unable to init svn repo in " + path.getAbsolutePath());
+		}
 	}
 
 	public String createUrl(String url) {
